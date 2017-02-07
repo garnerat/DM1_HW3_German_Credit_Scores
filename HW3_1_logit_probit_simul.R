@@ -45,3 +45,36 @@ for (i in 1:length(p.probit)){
  y.probit[i] <- outcome.probit
 }
 
+# create data fram
+data.logit <- data.frame(y.logit,x1,x2)
+
+data.probit <- data.frame(y.probit,x1,x2)
+
+model.logit.logit <- glm(y.logit~.,family=binomial(link="logit"),data = data.logit)
+model.logit.probit <- glm(y.logit~.,family=binomial(link="probit"),data = data.logit)
+
+model.probit.probit <- glm(y.probit~.,family=binomial(link="probit"),data = data.probit)
+model.probit.logit <- glm(y.probit~.,family=binomial(link="logit"),data = data.probit)
+
+# model summaries from logit probabilities
+
+summary(model.logit.logit)
+summary(model.logit.probit)
+
+AIC(model.logit.logit)
+AIC(model.logit.probit)
+
+BIC(model.logit.logit)
+BIC(model.logit.probit)
+
+
+# model summaries from probit probabilities
+
+summary(model.probit.logit)
+summary(model.probit.probit)
+
+AIC(model.probit.logit)
+AIC(model.probit.probit)
+
+BIC(model.probit.logit)
+BIC(model.probit.probit)
