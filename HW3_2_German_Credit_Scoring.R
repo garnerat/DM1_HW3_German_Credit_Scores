@@ -7,6 +7,7 @@
 #Notice that “It is worse to class a customer as good when they are bad (5), than it is to class a customer as bad when they are good (1).” 
 #Define your cost function accordingly!
 
+german_credit = read.table("http://archive.ics.uci.edu/ml/machine-learning-databases/statlog/german/german.data")
 
 colnames(german_credit) = c("chk_acct", "duration", "credit_his", "purpose", 
                             "amount", "saving_acct", "present_emp", "installment_rate", "sex", "other_debtor", 
@@ -16,5 +17,97 @@ colnames(german_credit) = c("chk_acct", "duration", "credit_his", "purpose",
 # orginal response coding 1= good, 2 = bad we need 0 = good, 1 = bad
 german_credit$response = german_credit$response - 1
 
-##### EDA ######
 
+##### Partition Train/Test #####
+
+
+index <- sample(1:nrow(german_credit),nrow(german_credit)*.7)
+
+train <- german_credit[index,]
+
+test <- german_credit[-index,]
+
+
+##### Summary Stats #####
+
+
+str(train)
+summary(train) #no NA values
+
+boxplot.stats(train$amount)
+
+table(train$response)
+
+##### EDA #####
+
+
+#prep for correlation matrix
+
+num <- sapply(train, is.numeric)
+
+df_cor <- train[,num]
+
+zv <- apply(df_cor, 2, function(x) length(unique(x)) <= 2)
+
+sum(zv)
+zv
+
+df_cor <- df_cor[, !zv]
+
+corr <- cor(df_cor,use = "pairwise.complete.obs")
+
+highCorr <- findCorrelation(corr, 0.70)
+
+length(highCorr) 
+
+colnames(corr[, highCorr,drop = FALSE]) 
+
+ggcorr(df_cor, method = c("complete", "pearson"), nbreaks = 10) #could also use pairwise, which is the default
+
+
+##### Logistic Regression #####
+
+model.logistic <- glm(response ~ . ,family = binomial, data = train)
+summary(model.logistic)
+
+step.logistic <- step(model.logistic)
+
+
+
+##### find cutoff probability with lowest cost #####
+
+# define the searc grid from 0.01 to 0.99
+searchgrid = seq(0.01, 0.99, 0.01)
+# result is a 99x2 matrix, the 1st col stores the cut-off p, the 2nd column
+# stores the cost
+result = cbind(searchgrid, NA)
+# in the cost function, both r and pi are vectors, r=truth, pi=predicted
+# probability
+cost1 <- function(r, pi) {
+  weight1 = 5
+  weight0 = 1
+  c1 = (r == 1) & (pi < pcut)  #logical vector - true if actual 1 but predict 0
+  c0 = (r == 0) & (pi > pcut)  #logical vecotr - true if actual 0 but predict 1
+  return(mean(weight1 * c1 + weight0 * c0))
+}
+
+for (i in 1:length(searchgrid)) {
+  pcut <- result[i, 1]
+  # assign the cost to the 2nd col
+  result[i, 2] <- cost1(train$response, predict(step.logistic, type = "response"))
+}
+plot(result, ylab = "Cost in Training Set") #.23 is cutoff with smallest cost
+
+###### Confusion Matrix and ROC #####
+
+prob.outsample <- predict(step.logistic, test, type = "response")
+
+prob.outsample.binary <- as.numeric(predict(step.logistic, test, type = "response") > 0.23)
+
+confusionMatrix(prob.outsample.binary,test$response)
+
+install.packages("ROCR")
+library(ROCR)
+pred <- prediction(prob.outsample, test$response)
+perf <- performance(pred, "tpr", "fpr")
+plot(perf, colorize = TRUE)
