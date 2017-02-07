@@ -98,16 +98,22 @@ for (i in 1:length(searchgrid)) {
 }
 plot(result, ylab = "Cost in Training Set") #.23 is cutoff with smallest cost
 
-###### Confusion Matrix and ROC #####
+###### Confusion Matrix, ROC, AUC #####
 
+# Confusion Matrix
 prob.outsample <- predict(step.logistic, test, type = "response")
 
 prob.outsample.binary <- as.numeric(predict(step.logistic, test, type = "response") > 0.23)
 
 confusionMatrix(prob.outsample.binary,test$response)
 
+# ROC
 install.packages("ROCR")
 library(ROCR)
 pred <- prediction(prob.outsample, test$response)
 perf <- performance(pred, "tpr", "fpr")
 plot(perf, colorize = TRUE)
+
+# AUC
+auc.perf = performance(pred, measure = "auc")
+auc.perf@y.values
