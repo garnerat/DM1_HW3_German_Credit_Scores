@@ -70,8 +70,13 @@ ggcorr(df_cor, method = c("complete", "pearson"), nbreaks = 10) #could also use 
 model.logistic <- glm(response ~ . ,family = binomial, data = train)
 summary(model.logistic)
 
+# AIC
+
 step.logistic <- step(model.logistic)
 
+# BIC
+
+step.logistic.BIC <- step(model.logistic, k = log(nrow(train)))
 
 
 ##### find cutoff probability with lowest cost #####
