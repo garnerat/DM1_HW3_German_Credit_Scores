@@ -7,5 +7,41 @@
 # x1i ~ Unif(0,1) 
 # x2i ~ 1,0 for odd/even i's respectively
 
+# set seed
+
+set.seed(1984)
+
+#sample size
+
 n=500
+
+# generate x1 and x2 data
+
+x1 <- runif(n, min = 0, max = 1)
+
+x2 <- rep(c(1,0), times= n/2)
+
+#generate probabilities for logit and probit 
+
+p.logit <- exp(-1.1+5*x1-.4*x2)/(1+exp(-1.1+5*x1-.4*x2))
+
+p.probit <-pnorm(-1.1+5*x1-.4*x2, mean = 0, sd = 1, lower.tail = TRUE)
+
+# generate y value for logit
+
+y.logit<- rep(NA,length(p.logit))
+output.logit <- rep(NA,length(p.logit))
+for (i in 1:length(p.logit)){
+  outcome.logit <-rbinom(1,1,p.logit[i])
+  y.logit[i] <- outcome.logit
+}
+
+# generate y value for probit
+
+y.probit<- rep(NA,length(p.probit))
+
+for (i in 1:length(p.probit)){
+  outcome.probit <-rbinom(1,1,p.probit[i])
+ y.probit[i] <- outcome.probit
+}
 
